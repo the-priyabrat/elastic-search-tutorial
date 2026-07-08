@@ -11,8 +11,8 @@
 	<groupId>com.elastic</groupId>
 	<artifactId>elastic-search-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>payzo-oci-service</name>
-	<description>oci service for uploading files</description>
+	<name>elastic-search-service</name>
+	<description>search service for searching text</description>
 	<properties>
 		<java.version>17</java.version>
 		<oci.sdk.version>3.55.2</oci.sdk.version>
