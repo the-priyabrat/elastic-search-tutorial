@@ -1,5 +1,6 @@
 package com.project.elasticSearch.elasticservice;
 
+import com.project.elasticSearch.dto.KafkaResponse;
 import com.project.elasticSearch.entity.ProductElasticEntity;
 import com.project.elasticSearch.dto.SearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 public class ElasticFuzzySearchImplementation implements ElasticSearchService{
 
     private final ElasticsearchOperations operation;
+    private final KafkaTemplate<String, KafkaResponse> kafkaTemplate;
 
     @Override
     public SearchResponse searchProduct(String keyWord) {
@@ -29,12 +32,25 @@ public class ElasticFuzzySearchImplementation implements ElasticSearchService{
                     .build();
             SearchHits<ProductElasticEntity> searchHits = operation.search(query, ProductElasticEntity.class);
             List<ProductElasticEntity> productList = searchHits.stream().map(SearchHit::getContent).toList();
+            KafkaResponse response = KafkaResponse.builder()
+                    .message("Fetched Successfully !")
+                    .authoredBy("PRI")
+                    .sentTime(String.valueOf(System.currentTimeMillis()))
+                    .targetedScreen("NOTIFICATION")
+                    .build();
+            kafkaTemplate.send("Notification", response);
             return SearchResponse.builder()
                     .message("Fetched Successful !")
                     .details(productList)
                     .build();
         } catch(Exception e) {
             log.info("Failed due to {}", e.getMessage());
+            kafkaTemplate.send("Notification", KafkaResponse.builder()
+                    .authoredBy("PRI")
+                    .targetedScreen("ERROR")
+                    .sentTime(String.valueOf(System.currentTimeMillis()))
+                    .message(e.getMessage())
+                    .build());
             return SearchResponse.builder()
                     .message("Fetch failed !")
                     .details(List.of())
